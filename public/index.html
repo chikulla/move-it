@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>move it</title>
+  <style>
+    body {
+      background: slategrey;
+    }
+
+    .cat {
+      width: 30px;
+      height: 30px;
+      border-radius: 50px;
+      background: white;
+      position: absolute;
+      box-shadow: 2px 2px 15px rgba(0, 0, 0, 0.9);
+      cursor: pointer !important;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyDL9t01wCNXCvWE6JHFYRMOQ3X6hffIXGA",
+      authDomain: "move-itt.firebaseapp.com",
+      databaseURL: "https://move-itt.firebaseio.com",
+      projectId: "move-itt",
+      storageBucket: "move-itt.appspot.com",
+      messagingSenderId: "264339211422"
+    };
+    firebase.initializeApp(config);
+  </script>
+</head>
+<body>
+<div id="cat" class="cat"></div>
+<script>
+  let diffX;
+  let diffY;
+  let cat;
+  let db;
+  initCat();
+
+  function initCat() {
+    db = firebase.database().ref('pos/');
+    cat = document.getElementById('cat');
+    cat.hidden = true;
+    initSubscription()
+    cat.addEventListener('mousedown', onMouseDown, false);
+  }
+
+  function initSubscription() {
+    db.on('value', (snapshot) => {
+      const pos = snapshot.val();
+      cat.style.top = (pos.y ? pos.y : 0) + 'px';
+      cat.style.left = (pos.x ? pos.x : 0) + 'px';
+      cat.hidden = false;
+      console.log(pos.x);
+      console.log(pos.y);
+    });
+  }
+
+
+  function onMouseDown(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const catPos = catPosition();
+    diffX = catPos.x - e.clientX;
+    diffY = catPos.y - e.clientY;
+    console.log(e.type);
+    window.addEventListener('mousemove', onMouseMove, true);
+    window.addEventListener('mouseup', onMouseUp, false);
+  }
+
+  function onMouseMove(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const y = e.clientY + diffY;
+    const x = e.clientX + diffX;
+    writeData(x, y);
+    console.log(e.type, 'y:', y, ',x:', x);
+    cat.style.top = y + 'px';
+    cat.style.left = x + 'px';
+  }
+
+  function onMouseUp(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    console.log(e.type);
+    window.removeEventListener('mousemove', onMouseMove, true);
+  }
+
+  function catPosition() {
+    const y = parseInt(cat.style.top.replace('px', ''));
+    const x = parseInt(cat.style.left.replace('px', ''));
+    return {x, y};
+  }
+
+  function writeData(x, y) {
+    db.set({
+      x,
+      y
+    });
+  }
+</script>
+</body>
+</html>
